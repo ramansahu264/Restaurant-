@@ -523,6 +523,13 @@
             menu.classList.toggle("fa-times");
             navbar.classList.toggle("active");
         };
+
+        navbar.querySelectorAll("a").forEach((a) => {
+            a.onclick = () => {
+                navbar.classList.remove("active");
+                menu.classList.remove("fa-times");
+            };
+        });
     </script>
 </body>
 
