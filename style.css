@@ -156,7 +156,7 @@ header .icons #menu {
   border: 0.1rem solid rgba(205, 170, 124, 0.2);
   background: transparent;
   cursor: pointer;
-  padding: 0.8ren 3ren;
+  padding: 0.8rem 3rem;
   position: relative;
   overflow: hidden;
   z-index: 1;
@@ -454,7 +454,7 @@ section {
 .reservation .form form select
 {
   display: block;
-  margin : 2rem 0
+  margin : 2rem 0;
   width: 100%;
   background: none;
   border-bottom : .1rem solid #b7b3b3;
@@ -693,4 +693,48 @@ section {
     display: block;
   }
 
+}
+
+/* ================= PHONE FIXES (added) ================= */
+img { max-width: 100%; }
+
+@media (max-width: 768px) {
+  body { overflow-x: hidden; }
+  html { scroll-padding-top: 9rem; }
+
+  section { padding: 5rem 5%; }
+
+  /* bigger tap targets for header icons */
+  header .icons i {
+    height: 6rem;
+    width: 6rem;
+    line-height: 6rem;
+    font-size: 2.4rem;
+  }
+
+  .home .home-slider .slide .content { padding: 0 2rem; }
+
+  /* menu */
+  .our-menu .menu-container { gap: 3rem 0; }
+  .our-menu .menu-container .item .item-name h2 { font-size: 2.6rem; }
+  .our-menu .menu-container .item .item-menu h3 { font-size: 2rem; }
+  .our-menu .menu-container .item .item-menu ul {
+    padding: 2rem 0;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  /* reservation: hide empty image strip, tighter form */
+  .reservation .image { display: none; }
+  .reservation .form { padding: 6rem 6%; }
+
+  /* footer */
+  .footer .container div { padding: 0 2rem; }
+}
+
+@media (max-width: 480px) {
+  .home .home-slider .slide .content h1 { font-size: 5rem; }
+  .home .home-slider .slide .content h3 { font-size: 2.2rem; }
+  .home .home-slider .slide .content p { font-size: 1.6rem; }
+  .our-chef { grid-template-columns: 1fr; }
 }
