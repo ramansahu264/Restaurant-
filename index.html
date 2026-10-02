@@ -370,30 +370,55 @@
                 <h3 class="sub-heading"> ~ check out our place</h3>
             </center>
 
-            <form>
+            <form id="bookingForm" novalidate>
                 <div class="form-holder">
                     <div>
-                        <select>
-                            <option>1 people</option>
-                            <option>2 people</option>
-                            <option>3 people</option>
-                            <option>4 people</option>
+                        <label for="bk-guests">Guests</label>
+                        <select id="bk-guests" name="guests">
+                            <option value="" disabled selected>Select guests</option>
+                            <option value="1">1 person</option>
+                            <option value="2">2 people</option>
+                            <option value="3">3 people</option>
+                            <option value="4">4 people</option>
+                            <option value="5">5 people</option>
+                            <option value="6">6 people</option>
+                            <option value="7">7 people</option>
+                            <option value="8">8 people</option>
                         </select>
 
-                        <input type="text" name="" placeholder="Time">
-                        <input type="text" name="" placeholder="Phone">
+                        <label for="bk-time">Time</label>
+                        <input type="time" id="bk-time" name="time">
+
+                        <label for="bk-phone">Phone</label>
+                        <input type="tel" id="bk-phone" name="phone" placeholder="10-digit mobile number" autocomplete="tel">
                     </div>
 
                     <div>
-                        <input type="text" name="" placeholder="Date">
-                        <input type="text" name="" placeholder="Name">
-                        <input type="email" name="" placeholder="email">
+                        <label for="bk-date">Date</label>
+                        <input type="date" id="bk-date" name="date">
+
+                        <label for="bk-name">Name</label>
+                        <input type="text" id="bk-name" name="name" placeholder="Your name" autocomplete="name">
+
+                        <label for="bk-email">Email (optional)</label>
+                        <input type="email" id="bk-email" name="email" placeholder="you@example.com" autocomplete="email">
                     </div>
                 </div>
+
+                <p class="form-msg" id="formMsg" role="alert" aria-live="polite"></p>
+
                 <center>
-                    <a href="#" class="btn">Book now</a>
+                    <button type="submit" class="btn">Book now</button>
                 </center>
             </form>
+
+            <div class="booking-success" id="bookingSuccess" hidden>
+                <i class="fa-solid fa-circle-check"></i>
+                <h2>Table booked!</h2>
+                <p>We will see you soon. Your booking details:</p>
+                <ul id="bookingSummary"></ul>
+                <button type="button" class="btn" id="bookAnother">Book another table</button>
+            </div>
 
         </div>
 
@@ -530,6 +555,162 @@
                 menu.classList.remove("fa-times");
             };
         });
+    </script>
+
+    <script>
+        (function () {
+            // Optional: put your WhatsApp number with country code, no "+" or spaces (e.g. "919876543210").
+            // If filled, WhatsApp opens with the booking details after a successful booking.
+            var WHATSAPP_NUMBER = "";
+
+            var form = document.getElementById("bookingForm");
+            var msg = document.getElementById("formMsg");
+            var success = document.getElementById("bookingSuccess");
+            var summary = document.getElementById("bookingSummary");
+            var again = document.getElementById("bookAnother");
+
+            var f = {
+                guests: document.getElementById("bk-guests"),
+                date: document.getElementById("bk-date"),
+                time: document.getElementById("bk-time"),
+                name: document.getElementById("bk-name"),
+                phone: document.getElementById("bk-phone"),
+                email: document.getElementById("bk-email"),
+            };
+
+            function pad(n) { return String(n).padStart(2, "0"); }
+            function todayStr() {
+                var d = new Date();
+                return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+            }
+            f.date.min = todayStr();
+
+            function clearErrors() {
+                msg.textContent = "";
+                Object.keys(f).forEach(function (k) {
+                    f[k].classList.remove("invalid");
+                    f[k].removeAttribute("aria-invalid");
+                });
+            }
+
+            function fail(field, text) {
+                field.classList.add("invalid");
+                field.setAttribute("aria-invalid", "true");
+                msg.textContent = text;
+                field.focus();
+                return false;
+            }
+
+            function cleanPhone(raw) {
+                var digits = raw.replace(/\D/g, "");
+                if (digits.length === 12 && digits.indexOf("91") === 0) digits = digits.slice(2);
+                if (digits.length === 11 && digits.charAt(0) === "0") digits = digits.slice(1);
+                return digits;
+            }
+
+            function validate() {
+                clearErrors();
+                if (!f.guests.value) return fail(f.guests, "Please select number of guests.");
+                if (!f.date.value) return fail(f.date, "Please choose a date.");
+                if (f.date.value < todayStr()) return fail(f.date, "Date cannot be in the past.");
+                if (!f.time.value) return fail(f.time, "Please choose a time.");
+                if (f.date.value === todayStr()) {
+                    var n = new Date();
+                    if (f.time.value <= pad(n.getHours()) + ":" + pad(n.getMinutes())) {
+                        return fail(f.time, "That time has already passed. Pick a later time.");
+                    }
+                }
+                if (f.name.value.trim().length < 2) return fail(f.name, "Please enter your name.");
+                if (!/^[6-9]\d{9}$/.test(cleanPhone(f.phone.value))) {
+                    return fail(f.phone, "Enter a valid 10-digit mobile number.");
+                }
+                var email = f.email.value.trim();
+                if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    return fail(f.email, "Enter a valid email or leave it empty.");
+                }
+                return true;
+            }
+
+            function prettyDate(v) {
+                var p = v.split("-");
+                return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-IN", {
+                    weekday: "short", day: "numeric", month: "short", year: "numeric",
+                });
+            }
+            function prettyTime(v) {
+                var p = v.split(":");
+                var d = new Date(); d.setHours(+p[0], +p[1], 0, 0);
+                return d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
+            }
+
+            function addRow(label, value) {
+                var li = document.createElement("li");
+                var b = document.createElement("b");
+                b.textContent = label + ": ";
+                li.appendChild(b);
+                li.appendChild(document.createTextNode(value));
+                summary.appendChild(li);
+            }
+
+            form.addEventListener("submit", function (e) {
+                e.preventDefault();
+                if (!validate()) return;
+
+                var booking = {
+                    id: "BK" + Date.now().toString().slice(-6),
+                    guests: f.guests.value,
+                    date: f.date.value,
+                    time: f.time.value,
+                    name: f.name.value.trim(),
+                    phone: cleanPhone(f.phone.value),
+                    email: f.email.value.trim(),
+                    createdAt: new Date().toISOString(),
+                };
+
+                // Saved in this browser only (no backend). Replace with a fetch() to your server/Formspree when ready.
+                try {
+                    var all = JSON.parse(localStorage.getItem("bookings") || "[]");
+                    all.push(booking);
+                    localStorage.setItem("bookings", JSON.stringify(all));
+                } catch (err) { /* storage blocked: ignore */ }
+
+                summary.innerHTML = "";
+                addRow("Booking ID", booking.id);
+                addRow("Name", booking.name);
+                addRow("Guests", booking.guests);
+                addRow("Date", prettyDate(booking.date));
+                addRow("Time", prettyTime(booking.time));
+                addRow("Phone", "+91 " + booking.phone);
+
+                form.hidden = true;
+                success.hidden = false;
+
+                if (WHATSAPP_NUMBER) {
+                    var text = "Table booking " + booking.id +
+                        "\nName: " + booking.name +
+                        "\nGuests: " + booking.guests +
+                        "\nDate: " + prettyDate(booking.date) +
+                        "\nTime: " + prettyTime(booking.time) +
+                        "\nPhone: " + booking.phone;
+                    window.open("https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(text), "_blank");
+                }
+            });
+
+            Object.keys(f).forEach(function (k) {
+                f[k].addEventListener("input", function () {
+                    f[k].classList.remove("invalid");
+                    f[k].removeAttribute("aria-invalid");
+                    msg.textContent = "";
+                });
+            });
+
+            again.addEventListener("click", function () {
+                form.reset();
+                clearErrors();
+                success.hidden = true;
+                form.hidden = false;
+            });
+        })();
     </script>
 </body>
 
